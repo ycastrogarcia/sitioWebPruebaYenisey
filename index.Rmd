@@ -1,0 +1,80 @@
+---
+title: "Página web de Prueba (Inicio)"
+author: "Yenisey Castro G"
+date: "`r Sys.Date()"
+output: 
+html_document: default
+word_document: default
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#Se cargan las librerías necesarias para el análisis
+library(openxlsx)
+library(siebanxicor)
+library(plotly)
+library(DT)
+#Configuración de mi toquen de Banxico
+setToken("11d2d67bce90ddfd199e2c9cadd2e62ebe6fa15ca73ef90001b36b0aef8853b5")
+```
+
+#Introducción
+
+En está página Web se muestra el desempeño histórico de las remuneraciones reales promedio en los sectores industrial y comercial. El objetivo es comrara su desempeño conta el comportamiento del INPC o inflación general.
+
+Para esto se extrajeron de las [bases de datos del banco de mexico] https://www.banxico.org.mx/SieAPIRest/service/v1/doc/catalogoSeries) banco de mexico se extrajeron los siguientes índices: 
+
+
+1. Remuneraciones medias reales base 100 2018 en el sector manufacturo. Codigo banxico SL11453
+2. Remuneraciones medias reales base 100 2018 en el sector comercio. Código banxico SL11426
+3. Índice Nacional de precios al Consumido subyacente (INPC). Código banxico SP1
+Por cuestiones de disponibiliad la inforamción se extrajo desde enero de 2008 a Septiembre de 2023
+
+#Desarrollo
+
+Esto
+
+```{r tablaDatos1, echo=FALSE}
+series = c("SL11453","SL11426","SP1")
+
+#Extraigo los dctos de la bases de datos
+datosBanxico=getSeriesData(series,'2008-01-01',"2023-09-01")
+                           
+#Creo la tabla(data.frame)con mis datos de análisis
+
+tablaDatos=data.frame( "Fecha"=datosBanxico$SL11426$date,
+                        "remunIndustrial"=datosBanxico$SL11453$value,
+                        "remunComercial"=datosBanxico$SL11426$value,
+                        "INPC"=datosBanxico$SP1$value)
+
+#Reexpresamos los 3 indices a una base 100 al 1 de enero del 2008
+
+tablaDatos$remunIndustrial=(tablaDatos$remunIndustrial/tablaDatos$remunIndustrial[1])*100
+tablaDatos$remunComercial=(tablaDatos$remunComercial/tablaDatos$remunComercial[1])*100
+tablaDatos$INPC=(tablaDatos$INPC/tablaDatos$INPC[1])*100
+
+datatable(tablaDatos)
+```
+```{r grafPlotly1a, echo=FALSE}
+figura1=plot_ly()
+
+figura1=add_trace(figura1,x=~Fecha,y=~INPC,data=tablaDatos,
+                  name="INPC",
+                  type="scatter",
+                  mode="lines")
+figura1=add_trace(figura1,x=~Fecha,y=~remunIndustrial,data=tablaDatos,
+                  name="INPC",
+                  type="scatter",
+                  mode="lines")
+figura1=add_trace(figura1,x=~Fecha,y=~remunComercial,data=tablaDatos,
+                  name="INPC",
+                  type="scatter",
+                  mode="lines")
+figura1=layout(figura1,
+                title="Comparativa de INPC v.s. remuneraciones realies en sectores industriales y comercial",
+                xaxis=list(title= "Tiempo (meses)"),
+                yaxis=list(title="Valor base 100 enero de 2008"))
+         figura1
+
+```
